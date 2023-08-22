@@ -1,0 +1,72 @@
+import tkinter as tk
+from tkinter.filedialog import askopenfilename
+import shutil
+import os
+import cv2
+import numpy as np
+from PIL import Image, ImageTk
+
+window = tk.Tk()
+window.title("PLANT DISEASE DETECTION")
+window.configure(background="white")
+
+title = tk.Label(text="Click below to choose a picture for testing disease....",
+                 background="white", fg="Brown", font=("", 15))
+title.pack()
+
+disease_label = tk.Label(window, text="", bg="white", fg="red", font=("", 12))
+disease_label.pack(pady=10)
+
+
+def choose_picture():
+    filename = askopenfilename()
+    if filename:
+        img = cv2.imread(filename, cv2.IMREAD_COLOR)
+        # Perform disease detection logic
+        is_diseased = detect_disease(img)
+
+        # Display the result
+        if is_diseased:
+            disease_label.config(text="The leaf is diseased.")
+            disease_label.config(fg="red")
+        else:
+            disease_label.config(text="The leaf is healthy.")
+            disease_label.config(fg="green")
+
+        # Copy the original image to the output folder
+        output_folder = "output"
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        shutil.copy(filename, os.path.join(output_folder, "original_image.jpg"))
+
+        # Display the selected image in a label widget
+        im = Image.open(filename)
+        im.thumbnail((200, 200))
+        image = ImageTk.PhotoImage(im)
+        panel = tk.Label(window, image=image, bg="white")
+        panel.image = image
+        panel.pack(pady=10)
+
+
+def detect_disease(img):
+    # Add your disease detection logic here
+    # Return True if the image is diseased, False if it is healthy
+
+    # Placeholder logic using image thresholding
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    num_white_pixels = np.sum(thresh == 255)
+
+    # Set a threshold for determining diseased or healthy based on the number of white pixels
+    threshold = 5000  # Adjust this value according to your requirements
+
+    if num_white_pixels > threshold:
+        return True  # The image is considered diseased
+    else:
+        return False  # The image is considered healthy
+
+
+btn = tk.Button(text="Choose Picture", command=choose_picture, bg="brown", fg="white", font=("", 12))
+btn.pack(pady=10)
+
+window.mainloop()
